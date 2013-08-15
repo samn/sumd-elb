@@ -34,9 +34,7 @@ class ElbCheck():
         Finds the load balancer's name from a public dns name like rails-settings-1257625549.us-east-1.elb.amazonaws.com
         """
         sub_domain = dns_name.split(".")[0]
-        # strip out the last part of the subdomain, separated by -'s.
-        # that should be the name of the load balancer.
-        return "-".join(sub_domain.split("-")[0:-1])
+        return sub_domain.rsplit("-", 1)[0]
 
     def construct_event(self, load_balancer, instance, instance_state):
         event = {}
