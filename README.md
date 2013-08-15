@@ -29,3 +29,11 @@ via [riemann-sumd](https://github.com/bmhatfield/riemann-sumd).
     ttl: 60
     tags: ['notify', 'elb']
     type: 'json'
+
+### Requirements
+
+* `boto` (python-boto)
+
+### Is it Terrible?
+
+eh
