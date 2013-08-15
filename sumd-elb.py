@@ -67,7 +67,11 @@ class ElbCheck():
         print json.dumps(events)
 
 if __name__ == "__main__":
-    parser = OptionParser()
+    desc = """
+A script to report the status of hosts in an ELB to Riemann via sumd.
+See http://riemann.io/ & https://github.com/bmhatfield/riemann-sumd
+    """
+    parser = OptionParser(description=desc)
     parser.add_option("--region", default="us-east-1", help="What region are the ELBs in?")
     parser.add_option("--load-balancers",  help="Comma separated list of load balancer names to check.  Defaults to all for the region if absent.")
     parser.add_option("--access-key", help="AWS Access Key")
