@@ -22,6 +22,15 @@ via [riemann-sumd](https://github.com/bmhatfield/riemann-sumd).
     --access-secret=ACCESS_SECRET
                             AWS Access Secret
 
+### IAM Permissions
+
+The user whose access keys you use to run this script needs to have the following permissions:
+
+* ec2:DescribeRegions
+* ec2:DescribeAvailabilityZones
+* elasticloadbalancing:DescribeInstanceHealth
+* elasticloadbalancing:DescribeLoadBalancers
+
 ### riemann-sumd config
 
     service: 'sumd-elb'
