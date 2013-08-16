@@ -45,10 +45,11 @@ class ElbCheck():
         event["host"] = instance.public_dns_name
         if instance_state.state == "InService":
             event["state"] = "ok"
+            event["metric"] = 1
         else:
             event["state"] = "error"
+            event["metric"] = 0
         event["description"] = "Instance health in ELB"
-        # TODO add a metric?
         event["attributes"] = {}
         event["attributes"]["region"] = self.region
         event["attributes"]["availability_zone"] = instance.placement

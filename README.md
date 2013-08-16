@@ -39,6 +39,15 @@ The user whose access keys you use to run this script needs to have the followin
     tags: ['notify', 'elb']
     type: 'json'
 
+### Riemann Event
+
+The event emitted to riemann-sumd (and sent to Riemann) will
+have a state of "ok" & metric of 1 if the instance is in service,
+and a state of "error" & metric of 0 otherwise.
+
+The event's service will include the ELB name.
+The host will be the public DNS name of the instance, as described by AWS.
+
 ### Requirements
 
 * `boto` (python-boto)
