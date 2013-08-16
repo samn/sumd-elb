@@ -43,6 +43,10 @@ The user whose access keys you use to run this script needs to have the followin
 
 * `boto` (python-boto)
 
+### Notes
+
+If an ELB has a terminated instance in it then it will not be monitored.
+
 ### Is it Terrible?
 
 eh

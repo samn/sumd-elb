@@ -26,8 +26,11 @@ class ElbCheck():
         return self.elb_conn.get_all_load_balancers(load_balancer_names=self.load_balancers)
 
     def get_instances(self, instance_ids):
-        reservations = self.ec2_conn.get_all_instances(instance_ids=instance_ids)
-        return [i for r in reservations for i in r.instances]
+        try:
+            reservations = self.ec2_conn.get_all_instances(instance_ids=instance_ids)
+            return [i for r in reservations for i in r.instances]
+        except boto.exception.EC2ResponseError:
+            return []
 
     def lb_name_from_dns(self, dns_name):
         """
@@ -59,9 +62,10 @@ class ElbCheck():
             instance_states = load_balancer.get_instance_health()
             instance_ids = [i_s.instance_id for i_s in instance_states]
             instances = dict((instance.id, instance) for instance in self.get_instances(instance_ids))
-            for instance_state in instance_states: 
-                event = self.construct_event(load_balancer, instances[instance_state.instance_id], instance_state)
-                events.append(event)
+            if instances:
+                for instance_state in instance_states: 
+                    event = self.construct_event(load_balancer, instances[instance_state.instance_id], instance_state)
+                    events.append(event)
         print json.dumps(events)
 
 if __name__ == "__main__":
