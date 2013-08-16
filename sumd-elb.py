@@ -11,6 +11,8 @@ class ElbCheck():
         self.load_balancers = None
         if options.load_balancers:
             self.load_balancers = options.load_balancers.split(",")
+        self.warn_percent = options.warn_percent
+        self.critical_percent = options.critical_percent
         self.access_key = options.access_key
         self.access_secret = options.access_secret
         self.elb_conn = self.create_elb_connection() 
@@ -39,15 +41,18 @@ class ElbCheck():
         sub_domain = dns_name.split(".")[0]
         return sub_domain.rsplit("-", 1)[0]
 
-    def construct_event(self, load_balancer, instance, instance_state):
+    def is_instance_up(self, instance_state):
+        return instance_state.state == "InService"
+
+    def construct_instance_event(self, load_balancer, instance, instance_state):
         event = {}
-        event["service"] = "%s ELB Status" % self.lb_name_from_dns(load_balancer.dns_name)
+        event["service"] = "%s ELB Instance Status" % self.lb_name_from_dns(load_balancer.dns_name)
         event["host"] = instance.public_dns_name
-        if instance_state.state == "InService":
+        if self.is_instance_up(instance_state):
             event["state"] = "ok"
             event["metric"] = 1
         else:
-            event["state"] = "error"
+            event["state"] = "warn"
             event["metric"] = 0
         event["description"] = "Instance health in ELB"
         event["attributes"] = {}
@@ -57,16 +62,40 @@ class ElbCheck():
         event["attributes"]["instance_id"] = instance.id
         return event
 
+    def construct_elb_event(self, load_balancer, percent_up):
+        event = {}
+        event["service"] = "%s ELB Status" % self.lb_name_from_dns(load_balancer.dns_name)
+        event["host"] = load_balancer.dns_name
+        if percent_up <= int(self.critical_percent):
+            event["state"] = "critical"
+        elif percent_up <= int(self.warn_percent): 
+            event["state"] = "warn"
+        else:
+            event["state"] = "ok"
+        event["metric"] = percent_up
+        event["description"] = "Percentage of in service hosts for this ELB."
+        event["attributes"] = {}
+        event["attributes"]["dns_name"] = load_balancer.dns_name
+        return event
+
     def report(self):
         events = []
         for load_balancer in self.get_load_balancers():
+            num_up, num_down = 0 , 0
             instance_states = load_balancer.get_instance_health()
             instance_ids = [i_s.instance_id for i_s in instance_states]
             instances = dict((instance.id, instance) for instance in self.get_instances(instance_ids))
             if instances:
                 for instance_state in instance_states: 
-                    event = self.construct_event(load_balancer, instances[instance_state.instance_id], instance_state)
+                    event = self.construct_instance_event(load_balancer, instances[instance_state.instance_id], instance_state)
                     events.append(event)
+                    if self.is_instance_up(instance_state):
+                        num_up += 1
+                    else:
+                        num_down += 1
+                percent_up = 100 * (num_up / float(num_up + num_down))
+                events.append(self.construct_elb_event(load_balancer, percent_up))
+
         print json.dumps(events)
 
 if __name__ == "__main__":
@@ -77,6 +106,8 @@ See http://riemann.io/ & https://github.com/bmhatfield/riemann-sumd
     parser = OptionParser(description=desc)
     parser.add_option("--region", default="us-east-1", help="What region are the ELBs in?")
     parser.add_option("--load-balancers",  help="Comma separated list of load balancer names to check.  Defaults to all for the region if absent.")
+    parser.add_option("--warn-percent",  default="75", help="Set the ELB state to warn when this percent of hosts are in service. default = 25")
+    parser.add_option("--critical-percent",  default="50", help="Set the ELB state to critical when this percent of hosts are in service. default = 50")
     parser.add_option("--access-key", help="AWS Access Key")
     parser.add_option("--access-secret", help="AWS Access Secret")
     options, args = parser.parse_args()
