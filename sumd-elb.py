@@ -87,8 +87,10 @@ class ElbCheck():
             instances = dict((instance.id, instance) for instance in self.get_instances(instance_ids))
             if instances:
                 for instance_state in instance_states: 
-                    event = self.construct_instance_event(load_balancer, instances[instance_state.instance_id], instance_state)
-                    events.append(event)
+                    # A terminated instance won't be in the instances list, even though it has an ELB status
+                    if instances.get(instance_state.instance_id, False):
+                        event = self.construct_instance_event(load_balancer, instances[instance_state.instance_id], instance_state)
+                        events.append(event)
                     if self.is_instance_up(instance_state):
                         num_up += 1
                     else:
