@@ -95,7 +95,8 @@ Per ELB:
 
 ### Notes
 
-If an ELB has a terminated instance in it then it will not be monitored.
+Terminated instances won't have an instance level event sent for them,
+but they will count towards the number of 'down' instances in the load balancer.
 
 ### Is it Terrible?
 
