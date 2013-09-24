@@ -95,7 +95,10 @@ class ElbCheck():
                         num_up += 1
                     else:
                         num_down += 1
-                percent_up = 100 * (num_up / float(num_up + num_down))
+                if num_up + num_down > 0:
+                    percent_up = 100 * (num_up / float(num_up + num_down))
+                else:
+                    percent_up = 0.0
                 events.append(self.construct_elb_event(load_balancer, percent_up))
 
         print json.dumps(events)
